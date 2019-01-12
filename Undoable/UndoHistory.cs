@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Undoable
 {
-    public class UndoHistorian
+    public class UndoHistory
     {
         private readonly Stack<IUndoable> _undoStack = new Stack<IUndoable>();
         private readonly Stack<IUndoable> _redoStack = new Stack<IUndoable>();
