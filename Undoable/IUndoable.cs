@@ -1,10 +1,8 @@
-﻿using System.Threading.Tasks;
-
-namespace Undoable
+﻿namespace Undoable
 {
     public interface IUndoable
     {
-        Task DoAsync();
-        Task UndoAsync();
+        void Do();
+        void Undo();
     }
 }

@@ -12,12 +12,12 @@ namespace Undoable
 
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1);
 
-        public async Task DoAsync(IUndoable undoable)
+        public void Do(IUndoable undoable)
         {
-            await _semaphore.WaitAsync();
+            _semaphore.Wait();
             try
             {
-                await undoable.DoAsync();
+                undoable.Do();
                 _undoStack.Push(undoable);
                 _redoStack.Clear();
             }
@@ -27,9 +27,9 @@ namespace Undoable
             }
         }
 
-        public async Task UndoAsync()
+        public void Undo()
         {
-            await _semaphore.WaitAsync();
+            _semaphore.Wait();
             try
             {
                 if (!_undoStack.Any())
@@ -38,7 +38,7 @@ namespace Undoable
                 }
 
                 var undoable = _undoStack.Pop();
-                await undoable.UndoAsync();
+                undoable.Undo();
                 _redoStack.Push(undoable);
             }
             finally
@@ -47,9 +47,9 @@ namespace Undoable
             }
         }
 
-        public async Task RedoAsync()
+        public void Redo()
         {
-            await _semaphore.WaitAsync();
+            _semaphore.Wait();
             try
             {
                 if (!_redoStack.Any())
@@ -58,7 +58,7 @@ namespace Undoable
                 }
 
                 var undoable = _redoStack.Pop();
-                await undoable.DoAsync();
+                undoable.Do();
                 _undoStack.Push(undoable);
             }
             finally
