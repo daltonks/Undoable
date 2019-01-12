@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Undoable
 {
@@ -11,6 +10,20 @@ namespace Undoable
         private readonly Stack<IUndoable> _redoStack = new Stack<IUndoable>();
 
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1);
+
+        public void AlreadyDone(IUndoable undoable)
+        {
+            _semaphore.Wait();
+            try
+            {
+                _undoStack.Push(undoable);
+                _redoStack.Clear();
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
 
         public void Do(IUndoable undoable)
         {
