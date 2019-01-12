@@ -1,2 +1,2 @@
 # Undoable
-Provides simple DoAsync, UndoAsync, and RedoAsync abilities
+Provides simple Do, Undo, and Redo abilities
