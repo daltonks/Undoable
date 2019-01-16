@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
 namespace Undoable
 {
-    public class UndoHistory
+    public class UndoHistory : IDisposable
     {
         private readonly Stack<IUndoable> _undoStack = new Stack<IUndoable>();
         private readonly Stack<IUndoable> _redoStack = new Stack<IUndoable>();
@@ -78,6 +79,11 @@ namespace Undoable
             {
                 _semaphore.Release();
             }
+        }
+
+        public void Dispose()
+        {
+            _semaphore.Dispose();
         }
     }
 }
