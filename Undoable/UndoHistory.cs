@@ -1,50 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace Undoable
 {
-    public class UndoHistory : IDisposable
+    public class UndoHistory
     {
         private readonly Stack<IUndoable> _undoStack = new Stack<IUndoable>();
         private readonly Stack<IUndoable> _redoStack = new Stack<IUndoable>();
 
-        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1);
-
         public void AlreadyDone(IUndoable undoable)
         {
-            _semaphore.Wait();
-            try
+            lock (this)
             {
                 _undoStack.Push(undoable);
                 _redoStack.Clear();
-            }
-            finally
-            {
-                _semaphore.Release();
             }
         }
 
         public void Do(IUndoable undoable)
         {
-            _semaphore.Wait();
-            try
+            lock (this)
             {
                 undoable.Do();
                 _undoStack.Push(undoable);
                 _redoStack.Clear();
             }
-            finally
-            {
-                _semaphore.Release();
-            }
         }
 
         public void Undo()
         {
-            _semaphore.Wait();
-            try
+            lock (this)
             {
                 if (!_undoStack.Any())
                 {
@@ -55,16 +40,11 @@ namespace Undoable
                 undoable.Undo();
                 _redoStack.Push(undoable);
             }
-            finally
-            {
-                _semaphore.Release();
-            }
         }
 
         public void Redo()
         {
-            _semaphore.Wait();
-            try
+            lock (this)
             {
                 if (!_redoStack.Any())
                 {
@@ -75,15 +55,6 @@ namespace Undoable
                 undoable.Do();
                 _undoStack.Push(undoable);
             }
-            finally
-            {
-                _semaphore.Release();
-            }
-        }
-
-        public void Dispose()
-        {
-            _semaphore.Dispose();
         }
     }
 }
