@@ -9,8 +9,11 @@ namespace Undoable
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private readonly Stack<IUndoable> _undoStack = new Stack<IUndoable>();
-        private readonly Stack<IUndoable> _redoStack = new Stack<IUndoable>();
+        private readonly LinkedList<IUndoable> _undoList = new LinkedList<IUndoable>();
+        private readonly LinkedList<IUndoable> _redoList = new LinkedList<IUndoable>();
+
+        public int MaxUndoCount { get; set; } = int.MaxValue;
+        public int MaxRedoCount { get; set; } = int.MaxValue;
 
         private int _undoCount;
         public int UndoCount
@@ -39,8 +42,13 @@ namespace Undoable
         {
             lock (this)
             {
-                _undoStack.Push(undoable);
-                _redoStack.Clear();
+                _undoList.AddLast(undoable);
+                _redoList.Clear();
+
+                while (_undoList.Count > MaxUndoCount)
+                {
+                    _undoList.RemoveFirst();
+                }
 
                 UpdateCounts();
             }
@@ -50,14 +58,20 @@ namespace Undoable
         {
             lock (this)
             {
-                if (!_undoStack.Any())
+                if (!_undoList.Any())
                 {
                     return;
                 }
 
-                var undoable = _undoStack.Pop();
+                var undoable = _undoList.Last.Value;
+                _undoList.RemoveLast();
                 undoable.Undo();
-                _redoStack.Push(undoable);
+                _redoList.AddLast(undoable);
+
+                while (_redoList.Count > MaxRedoCount)
+                {
+                    _redoList.RemoveFirst();
+                }
 
                 UpdateCounts();
             }
@@ -67,14 +81,20 @@ namespace Undoable
         {
             lock (this)
             {
-                if (!_redoStack.Any())
+                if (!_redoList.Any())
                 {
                     return;
                 }
 
-                var undoable = _redoStack.Pop();
+                var undoable = _redoList.Last.Value;
+                _redoList.RemoveLast();
                 undoable.Do();
-                _undoStack.Push(undoable);
+                _undoList.AddLast(undoable);
+
+                while (_undoList.Count > MaxUndoCount)
+                {
+                    _undoList.RemoveFirst();
+                }
 
                 UpdateCounts();
             }
@@ -82,8 +102,8 @@ namespace Undoable
 
         private void UpdateCounts()
         {
-            UndoCount = _undoStack.Count;
-            RedoCount = _redoStack.Count;
+            UndoCount = _undoList.Count;
+            RedoCount = _redoList.Count;
         }
 
         private void SetProperty<T>(ref T obj, T value, [CallerMemberName] string propertyName = null)
