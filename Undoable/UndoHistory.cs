@@ -9,8 +9,31 @@ namespace Undoable
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        private readonly object _lock = new object();
         private readonly LinkedList<IUndoable> _undoList = new LinkedList<IUndoable>();
         private readonly LinkedList<IUndoable> _redoList = new LinkedList<IUndoable>();
+
+        public List<IUndoable> UndoItems
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return new List<IUndoable>(_undoList);
+                }
+            }
+        }
+
+        public List<IUndoable> RedoItems
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return new List<IUndoable>(_redoList);
+                }
+            }
+        }
 
         public int MaxUndoCount { get; set; } = int.MaxValue;
         public int MaxRedoCount { get; set; } = int.MaxValue;
@@ -31,7 +54,7 @@ namespace Undoable
 
         public void Do(IUndoable undoable)
         {
-            lock (this)
+            lock (_lock)
             {
                 undoable.Do();
                 AlreadyDone(undoable);
@@ -40,7 +63,7 @@ namespace Undoable
 
         public void AlreadyDone(IUndoable undoable)
         {
-            lock (this)
+            lock (_lock)
             {
                 _undoList.AddLast(undoable);
                 _redoList.Clear();
@@ -56,7 +79,7 @@ namespace Undoable
 
         public void Undo()
         {
-            lock (this)
+            lock (_lock)
             {
                 if (!_undoList.Any())
                 {
@@ -79,7 +102,7 @@ namespace Undoable
 
         public void Redo()
         {
-            lock (this)
+            lock (_lock)
             {
                 if (!_redoList.Any())
                 {
